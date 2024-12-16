@@ -10,7 +10,7 @@ package main
 import (
 	"io/ioutil"
 
-	"github.com/isaaguilar/selfsigned"
+	"github.com/trichardsonjr78/selfsigned"
 )
 
 func main() {
