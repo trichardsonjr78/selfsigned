@@ -23,7 +23,7 @@ const (
 	RSAPrivateKeyBlockType = "RSA PRIVATE KEY"
 	certificateBlockType   = "CERTIFICATE"
 	rsaKeySize             = 2048
-	duration365d           = time.Hour * 24 * 365
+	duration               = time.Second * 120
 )
 
 // NewPrivateKey creates an RSA private key
@@ -62,7 +62,7 @@ func NewSignedCert(cfg *Config, key crypto.Signer, caCert *x509.Certificate, caK
 		IPAddresses:  cfg.AltNames.IPs,
 		SerialNumber: serial,
 		NotBefore:    caCert.NotBefore,
-		NotAfter:     time.Now().Add(duration365d).UTC(),
+		NotAfter:     time.Now().Add(duration).UTC(),
 		KeyUsage:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:  cfg.Usages,
 	}
@@ -100,7 +100,7 @@ func NewSelfSignedCACert(cfg Config, key crypto.Signer) (*x509.Certificate, erro
 			Organization: cfg.Organization,
 		},
 		NotBefore:             now.UTC(),
-		NotAfter:              now.Add(duration365d * 25).UTC(),
+		NotAfter:              now.Add(duration * 25).UTC(),
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
 		IsCA:                  true,
