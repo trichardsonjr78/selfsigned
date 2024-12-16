@@ -23,7 +23,7 @@ const (
 	RSAPrivateKeyBlockType = "RSA PRIVATE KEY"
 	certificateBlockType   = "CERTIFICATE"
 	rsaKeySize             = 2048
-	duration               = time.Second * 120
+	duration               = time.Second * 180
 )
 
 // NewPrivateKey creates an RSA private key
