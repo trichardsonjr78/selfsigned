@@ -23,7 +23,6 @@ const (
 	RSAPrivateKeyBlockType = "RSA PRIVATE KEY"
 	certificateBlockType   = "CERTIFICATE"
 	rsaKeySize             = 2048
-	duration               = time.Second * 180
 )
 
 // NewPrivateKey creates an RSA private key
@@ -41,7 +40,8 @@ func EncodeCertPEM(cert *x509.Certificate) []byte {
 }
 
 // NewSignedCert creates a signed certificate using the given CA certificate and key
-func NewSignedCert(cfg *Config, key crypto.Signer, caCert *x509.Certificate, caKey crypto.Signer) (*x509.Certificate, error) {
+func NewSignedCert(cfg *Config, key crypto.Signer, caCert *x509.Certificate, caKey crypto.Signer, duration time.Duration) (*x509.Certificate, error) {
+
 	serial, err := cryptorand.Int(cryptorand.Reader, new(big.Int).SetInt64(math.MaxInt64))
 	if err != nil {
 		return nil, err
@@ -91,7 +91,7 @@ type AltNames struct {
 }
 
 // NewSelfSignedCACert creates a CA certificate
-func NewSelfSignedCACert(cfg Config, key crypto.Signer) (*x509.Certificate, error) {
+func NewSelfSignedCACert(cfg Config, key crypto.Signer, duration time.Duration) (*x509.Certificate, error) {
 	now := time.Now()
 	tmpl := x509.Certificate{
 		SerialNumber: new(big.Int).SetInt64(0),
@@ -175,14 +175,14 @@ type SelfSignedCert struct {
 
 // NewSelfSignedCertOrDie is a factory to generate very basic self signed certs good for a year.
 // It returns a struct of the three files for self signed certs. It does not save a file.
-func NewSelfSignedCertOrDie(names []string) *SelfSignedCert {
+func NewSelfSignedCertOrDie(names []string, duration time.Duration) *SelfSignedCert {
 
 	signingKey, err := NewPrivateKey()
 	if err != nil {
 		log.Fatalf("Failed to create CA private key %v", err)
 	}
 
-	signingCert, err := NewSelfSignedCACert(Config{CommonName: "selfsigned"}, signingKey)
+	signingCert, err := NewSelfSignedCACert(Config{CommonName: "selfsigned"}, signingKey, duration)
 	if err != nil {
 		log.Fatalf("Failed to create CA cert for apiserver %v", err)
 	}
@@ -206,7 +206,7 @@ func NewSelfSignedCertOrDie(names []string) *SelfSignedCert {
 			},
 			Usages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		},
-		key, signingCert, signingKey,
+		key, signingCert, signingKey, duration,
 	)
 
 	if err != nil {
@@ -231,7 +231,7 @@ func NewSelfSignedCertOrDie(names []string) *SelfSignedCert {
 }
 
 // UpdateTLS uses the same signing certificate to issue a new tls certificate
-func (s *SelfSignedCert) UpdateTLS() error {
+func (s *SelfSignedCert) UpdateTLS(duration time.Duration) error {
 
 	signingCert, err := x509Cert(s.CACert)
 	if err != nil {
@@ -262,7 +262,7 @@ func (s *SelfSignedCert) UpdateTLS() error {
 			},
 			Usages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		},
-		key, signingCert, signingKey,
+		key, signingCert, signingKey, duration,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create cert%v", err)
